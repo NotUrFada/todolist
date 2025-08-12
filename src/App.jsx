@@ -1,19 +1,34 @@
 import "./App.css";
+import TodoForm from "./features/TodoForm";
+import TodoList from "./features/TodoList/TodoList";
+import { useState } from "react";
 
 function App() {
-  const todos = [
-    { id: 1, title: "review resources" },
-    { id: 2, title: "take notes" },
-    { id: 3, title: "code out app" },
-  ];
+  const [todoList, setTodoList] = useState([]);
+
+  const addTodo = (title) => {
+    const newTodo = {
+      title: title,
+      id: Date.now(),
+      isCompleted: false,
+    };
+    setTodoList([...todoList, newTodo]);
+  };
+
+  const completeTodo = (id) => {
+    const updatedTodos = todoList.map((todo) => {
+      if (todo.id === id) return { ...todo, isCompleted: true };
+
+      return todo;
+    });
+    setTodoList(updatedTodos);
+  };
+
   return (
     <div>
       <h1>My Todos</h1>
-      <u1>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.title}</li>
-        ))}
-      </u1>
+      <TodoForm onAddTodo={addTodo} />
+      <TodoList todoList={todoList} onCompleteTodo={completeTodo} />
     </div>
   );
 }
