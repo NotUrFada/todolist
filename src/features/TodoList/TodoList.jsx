@@ -1,39 +1,22 @@
-{
-  /*extract from TodoList.jsx*/
-}
-
 import TodoListItem from "../../TodoListItem";
-
-function TodoList({
-  todoList,
-  onCompleteTodo,
-  onUpdateTodo,
-  isLoading,
-  errorMessage,
-}) {
-  const filteredTodoList = todoList.filter((todo) => !todo.isCompleted);
-
-  return (
-    <div>
-      {isLoading && <p>Todo list Loading...</p>}
-      {filteredTodoList.length === 0 ? (
-        <p>Add todo above to get started</p>
-      ) : (
-        <ul>
-          {filteredTodoList.map((todo) => (
+function TodoList({todoList,onCompleteTodo,onUpdateTodo,isLoading}) {
+   const filteredTodlist=todoList.filter(todo => !todo.isCompleted);
+   if(isLoading){
+    return <p>Todo list loading...</p>; 
+   }
+    return filteredTodlist.length > 0 ?(<ul>
+            {filteredTodlist.map(todo => 
             <TodoListItem
-              key={todo.id}
-              todo={todo}
-              onCompleteTodo={onCompleteTodo}
-              onUpdateTodo={onUpdateTodo}
-              isLoading={isLoading}
-              errorMessage={errorMessage}
+             key={todo.id} 
+             todo={todo} 
+             onCompleteTodo={onCompleteTodo}
+             onUpdateTodo={onUpdateTodo}   
             />
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+            
+            )}
+           </ul>) :(
+            <p>Add a to-do above to get started</p>
+           );
 }
 
-export default TodoList;
+export default TodoList; // Exporting TodoList as default
