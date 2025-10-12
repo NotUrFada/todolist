@@ -1,38 +1,44 @@
-import "./App.css";
-import TodoForm from "./features/TodoForm";
-import TodoList from "./features/TodoList/TodoList";
-import { useEffect, useState } from "react";
-
-const AIRTABLE_URL = `https://api.airtable.com/v0/${
-  import.meta.env.VITE_BASE_ID
-}/${import.meta.env.VITE_TABLE_NAME}`;
-const AIRTABLE_HEADERS = {
-  Authorization: `Bearer ${import.meta.env.VITE_PAT}`,
-  "Content-Type": "application/json",
-};
+import './App.css';
+import TodoList from './features/TodoList/TodoList';
+import TodoForm from './features/TodoForm';
+import TodosViewForm from './features/TodosViewForm';
+import { useState, useEffect } from 'react';
 
 function App() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const [todoList, setTodoList] = useState([]);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [sortField, setSortField]=useState("createdTime")
+  const [sortDirection, setSortDirection]=useState("desc")
+  const [queryString, setQueryString]=useState('')
+  const token = `Bearer ${import.meta.env.VITE_PAT}`;
+  const url = `https://api.airtable.com/v0/${import.meta.env.VITE_BASE_ID}/${import.meta.env.VITE_TABLE_NAME}`;
+  
+  const encodeUrl = ({ sortField, sortDirection, queryString }) => {
+    let sortQuery = `sort[0][field]=${sortField}&sort[0][direction]=${sortDirection}`;
+    let searchQuery='';
+    if (queryString) {
+      searchQuery=`&filterByFormula=SEARCH("${queryString}",+title)`;
+    }
+    return encodeURI(`${url}?${sortQuery}${searchQuery}`);
+  };
 
   useEffect(() => {
     const fetchTodos = async () => {
       setIsLoading(true);
-      setErrorMessage("");
+      const options = {
+        method: 'GET',
+        headers: { Authorization: token },
+      };
       try {
-        const response = await fetch(AIRTABLE_URL, {
-          method: "GET",
-          headers: AIRTABLE_HEADERS,
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch todos");
+        const resp = await fetch(encodeUrl({ sortField, sortDirection, queryString }), options);
+        if (!resp.ok) {
+          throw new Error(resp.statusText || `HTTP ${resp.status}`);
         }
-
-        const data = await response.json();
-        const todos = data.records.map((record) => {
+        const { records } = await resp.json();
+        const fetched = records.map((record) => {
           const todo = {
             id: record.id,
             ...record.fields,
@@ -42,19 +48,20 @@ function App() {
           }
           return todo;
         });
-
-        setTodoList(todos);
-      } catch (error) {
-        setErrorMessage(error.message);
+        setTodoList(fetched);
+      } catch (err) {
+        setErrorMessage(err.message || 'Failed to load todos');
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchTodos();
-  }, []);
+  }, [sortField, sortDirection, queryString, token]);
 
-  const addTodo = async (newTodo) => {
+  //adding new todo to Airtable
+  async function addTodo(title) {
+    const newTodo = { title, isCompleted: false };
+
     const payload = {
       records: [
         {
@@ -66,39 +73,84 @@ function App() {
       ],
     };
 
+    const options = {
+      method: 'POST',
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    };
+
     try {
       setIsSaving(true);
-      const resp = await fetch(AIRTABLE_URL, {
-        method: "POST",
-        headers: AIRTABLE_HEADERS,
-        body: JSON.stringify(payload),
-      });
-
+      const resp = await fetch(encodeUrl({ sortField, sortDirection, queryString }), options);
       if (!resp.ok) {
-        throw new Error(`Failed to save todo: ${resp.statusText}`);
+        throw new Error(resp.statusText || `HTTP ${resp.status}`);
       }
-
       const { records } = await resp.json();
-      const savedTodo = {
+      const saved = {
         id: records[0].id,
         ...records[0].fields,
       };
-
-      if (!savedTodo.isCompleted) {
-        savedTodo.isCompleted = false;
-      }
-
-      setTodoList([...todoList, savedTodo]);
-    } catch (error) {
-      console.error(error);
-      setErrorMessage(error.message);
+      if (!saved.isCompleted) saved.isCompleted = false;
+      setTodoList([...todoList, saved]);
+    } catch (err) {
+      console.error(err);
+      setErrorMessage(err.message || 'Failed to save todo');
     } finally {
       setIsSaving(false);
     }
-  };
+  }
 
-  const updateTodo = async (editedTodo) => {
-    const originalTodo = todoList.find((todo) => todo.id === editedTodo.id);
+  //Complete Todo
+  async function completeTodo(id) {
+    const original = todoList.find((t) => t.id === id);
+    const optimistic = todoList.map((t) =>
+      t.id === id ? { ...t, isCompleted: true } : t
+    );
+    setTodoList(optimistic);
+
+    const payload = {
+      records: [
+        {
+          id,
+          fields: { isCompleted: true },
+        },
+      ],
+    };
+
+    const options = {
+      method: 'PATCH',
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    };
+
+    try {
+      const resp = await fetch(encodeUrl({ sortField, sortDirection, queryString }), options);
+      if (!resp.ok) {
+        throw new Error(resp.statusText || `HTTP ${resp.status}`);
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMessage(
+        (err.message || 'Failed to complete todo') + '. Reverting todo...'
+      );
+      const reverted = todoList.map((t) => (t.id === id ? original : t));
+      setTodoList(reverted);
+    }
+  }
+
+  async function updateTodo(editedTodo) {
+    const original = todoList.find((t) => t.id === editedTodo.id);
+
+    const optimistic = todoList.map((t) =>
+      t.id === editedTodo.id ? { ...editedTodo } : t
+    );
+    setTodoList(optimistic);
 
     const payload = {
       records: [
@@ -112,91 +164,58 @@ function App() {
       ],
     };
 
-    try {
-      setIsSaving(true);
-      const resp = await fetch(AIRTABLE_URL, {
-        method: "PATCH",
-        headers: AIRTABLE_HEADERS,
-        body: JSON.stringify(payload),
-      });
-
-      if (!resp.ok) {
-        throw new Error(`Failed to update todo: ${resp.statusText}`);
-      }
-
-      const updatedList = todoList.map((todo) =>
-        todo.id === editedTodo.id ? editedTodo : todo
-      );
-      setTodoList(updatedList);
-    } catch (error) {
-      console.error(error);
-      setErrorMessage(`${error.message}. Reverting todo...`);
-      const revertedList = todoList.map((todo) =>
-        todo.id === originalTodo.id ? originalTodo : todo
-      );
-      setTodoList(revertedList);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const completeTodo = async (id) => {
-    const editedTodo = todoList.find((todo) => todo.id === id);
-    const originalTodo = { ...editedTodo };
-    const updatedTodo = { ...editedTodo, isCompleted: true };
-
-    const payload = {
-      records: [
-        {
-          id: updatedTodo.id,
-          fields: {
-            title: updatedTodo.title,
-            isCompleted: updatedTodo.isCompleted,
-          },
-        },
-      ],
+    const options = {
+      method: 'PATCH',
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
     };
 
-    setTodoList(todoList.map((todo) => (todo.id === id ? updatedTodo : todo)));
-
     try {
-      setIsSaving(true);
-      const resp = await fetch(AIRTABLE_URL, {
-        method: "PATCH",
-        headers: AIRTABLE_HEADERS,
-        body: JSON.stringify(payload),
-      });
-
+      const resp = await fetch(encodeUrl({ sortField, sortDirection, queryString }), options);
       if (!resp.ok) {
-        throw new Error(`Failed to update todo: ${resp.statusText}`);
+        throw new Error(resp.statusText || `HTTP ${resp.status}`);
       }
-    } catch (error) {
-      console.error(error);
-      setErrorMessage(`${error.message}. Reverting todo...`);
-      setTodoList(
-        todoList.map((todo) => (todo.id === id ? originalTodo : todo))
+    } catch (err) {
+      console.error(err);
+      setErrorMessage(
+        (err.message || 'Failed to update todo') + '. Reverting todo...'
       );
+      const reverted = todoList.map((t) =>
+        t.id === editedTodo.id ? original : t
+      );
+      setTodoList(reverted);
     } finally {
       setIsSaving(false);
     }
-  };
+  }
 
   return (
     <div>
-      <h1>My Todos</h1>
+      <h1>My Todo App</h1>
       <TodoForm onAddTodo={addTodo} isSaving={isSaving} />
       <TodoList
         todoList={todoList}
+        isLoading={isLoading}
         onCompleteTodo={completeTodo}
         onUpdateTodo={updateTodo}
-        isLoading={isLoading}
-        errorMessage={errorMessage}
+      />
+      <hr />
+      <TodosViewForm 
+        sortDirection={sortDirection}
+        setSortDirection={setSortDirection}
+        sortField={sortField}
+        setSortField={setSortField}
+        queryString={queryString}
+        setQueryString={setQueryString}
       />
       {errorMessage && (
-        <div>
+        <div style={{ marginTop: 16 }}>
           <hr />
-          <p style={{ color: "red" }}>{errorMessage}</p>
-          <button onClick={() => setErrorMessage("")}>Dismiss</button>
+          <p role="alert">Error: {errorMessage}</p>
+          <button onClick={() => setErrorMessage('')}>Dismiss</button>
         </div>
       )}
     </div>

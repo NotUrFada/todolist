@@ -1,41 +1,37 @@
-// src/features/TodoForm.jsx
 import { useState, useRef } from "react";
 import TextInputWithLabel from "../shared/TextInputWithLabel";
 
-function TodoForm({ onAddTodo, isSaving }) {
-  const [workingTodoTitle, setWorkingTodoTitle] = useState("");
-  const inputRef = useRef(null);
 
-  function handleAddTodo(event) {
-    event.preventDefault();
-    const title = workingTodoTitle.trim();
-    if (!title) return;
+function TodoForm({ onAddTodo }) {
+    const todoTitleRef = useRef(null);
+    const [workingTodoTitle, setWorkingTodoTitle] = useState('');
+     
+    function handleAddTodo(event) {
+        event.preventDefault();
+        const newTodoTitle = workingTodoTitle;
 
-    // App.addTodo expects an object { title, isCompleted }
-    onAddTodo({ title, isCompleted: false });
+        
+        onAddTodo(newTodoTitle);
 
-    setWorkingTodoTitle("");
-    // optional: re-focus input after submit
-    if (inputRef.current) inputRef.current.focus();
-  }
+        
+        setWorkingTodoTitle(""); 
+        todoTitleRef.current.focus();
+    }
 
-  return (
-    <form onSubmit={handleAddTodo}>
-      <TextInputWithLabel
-        elementId="todoTitle"
-        labelText="Todo"
-        onChange={(event) => setWorkingTodoTitle(event.target.value)}
-        ref={inputRef}
-        value={workingTodoTitle}
-      />
-      <button
-        type="submit"
-        disabled={isSaving || workingTodoTitle.trim() === ""}
-      >
-        {isSaving ? "Saving..." : "Add Todo"}
-      </button>
-    </form>
-  );
+    return (
+        <form onSubmit={handleAddTodo}>
+            <TextInputWithLabel
+                elementId="todoTitle"
+                labelText="Todo"
+                ref={todoTitleRef} 
+                value={workingTodoTitle} 
+                onChange={(e) => setWorkingTodoTitle(e.target.value)}
+                
+            />
+
+            <button type="submit" disabled={workingTodoTitle.trim() === ""}>Add Todo</button>
+        </form>
+    );
 }
 
 export default TodoForm;
