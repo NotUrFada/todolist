@@ -1,0 +1,17 @@
+.title {
+  text-align: center; 
+}
+
+.nav {
+  display: flex; 
+  justify-content: flex-end; 
+  margin: 1rem; 
+}
+
+.active {
+  color: gray;
+}
+
+.inactive {
+  color: black; 
+}

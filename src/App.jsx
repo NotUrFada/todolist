@@ -5,6 +5,13 @@ import TodoForm from './features/TodoForm';
 import TodosViewForm from './features/TodosViewForm';
 import { useState, useEffect, useCallback, useReducer} from 'react';
 import { reducer, actions as todoActions, initialState } from './reducers/todos.reducer.js';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+
+import TodosPage from './pages/TodosPage.jsx'; 
+// IMPORT NEW PAGE COMPONENTS
+import About from './pages/About.jsx';
+import NotFound from './pages/NotFound.jsx';
+
 
 function App() {
   const [todoList, setTodoList] = useState([]);
@@ -50,7 +57,7 @@ function App() {
       }
     };
     fetchTodos();
-  }, [sortField, sortDirection, queryString, encodeUrl]);
+  }, [sortField, sortDirection, queryString, encodeUrl, token]);
 
   //Add Todo
   async function addTodo(title) {
@@ -89,6 +96,8 @@ function App() {
     } catch (err) {
       dispatch({ type: todoActions.setLoadError, error: err});
 
+    } finally{
+      dispatch({ type: todoActions.endRequest });
     }
   }
 
@@ -163,35 +172,54 @@ function App() {
       });
     }
   }
+  const clearError = () => dispatch({ type: todoActions.clearError });
 
-  return (
-    <div className={styles.App}>
-      <h1>My Todo App</h1>
-      <TodoForm onAddTodo={addTodo} isSaving={todoState.isSaving} />
-      <TodoList
+  const todosPageElement = (
+    <TodosPage 
+  
         todoList={todoState.todoList}
         isLoading={todoState.isLoading}
-        onCompleteTodo={completeTodo}
-        onUpdateTodo={updateTodo}
-      />
-      <hr />
-      <TodosViewForm 
-        sortDirection={sortDirection}
-        setSortDirection={setSortDirection}
+        errorMessage= {todoState.errorMessage}
+        isSaving={todoState.isSaving}
         sortField={sortField}
         setSortField={setSortField}
+        sortDirection={sortDirection}
+        setSortDirection={setSortDirection}
         queryString={queryString}
         setQueryString={setQueryString}
-      />
-      {todoState.errorMessage && (
-        <div className={styles.ErrorContainer}>
-          <hr />
-          <p role="alert">Error: {todoState.errorMessage}</p>
+        addTodo={addTodo}
+        completeTodo={completeTodo}
+        updateTodo={updateTodo}
+        clearError={clearError}
+        errorContainerClassName={styles.ErrorContainer}
+    />
+    );
 
-          <button onClick={() => dispatch({ type: todoActions.clearError })}>Dismiss</button>
-        </div>
-      )}
-    </div>
+
+  return (
+    <BrowserRouter>
+      <div className={styles.App}>
+        {/*Navigation*/}
+        <header>
+          <nav>
+            <Link to="/">Home</Link> | <Link to="/about">About</Link>
+          </nav>
+        </header>
+
+        {/* ROUTES  */}
+        <Routes>
+          {/* TodoListPage */}
+          <Route path="/" element={todosPageElement} />
+
+          {/* replacing the old h1 */}
+          <Route path="/about" element={<About />} /> 
+
+          {/* ith the NotFound component */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  
   );
 }
 
