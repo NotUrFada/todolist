@@ -9,11 +9,7 @@ function TodoForm({ onAddTodo }) {
     function handleAddTodo(event) {
         event.preventDefault();
         const newTodoTitle = workingTodoTitle;
-
-        
         onAddTodo(newTodoTitle);
-
-        
         setWorkingTodoTitle(""); 
         todoTitleRef.current.focus();
     }
