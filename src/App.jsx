@@ -7,7 +7,6 @@ import { useState, useEffect, useCallback} from 'react';
 
 function App() {
   const [todoList, setTodoList] = useState([]);
-
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);

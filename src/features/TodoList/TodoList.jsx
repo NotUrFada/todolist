@@ -13,7 +13,6 @@ function TodoList({todoList,onCompleteTodo,onUpdateTodo,isLoading}) {
              onCompleteTodo={onCompleteTodo}
              onUpdateTodo={onUpdateTodo}   
             />
-            
             )}
            </ul>) :(
             <p>Add a to-do above to get started</p>

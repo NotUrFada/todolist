@@ -15,8 +15,6 @@ const StyledForm = styled.form`
 const StyledButton = styled.button`
     font-style: $props => props.disabled ? 'italic' : nomal'};
     `;
-
-
 function TodoForm({ onAddTodo }) {
     const todoTitleRef = useRef(null);
     const [workingTodoTitle, setWorkingTodoTitle] = useState('');

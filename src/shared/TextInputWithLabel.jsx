@@ -3,8 +3,6 @@ const StyledDiv = styled.div`
   display: flex;
   flex-direction: column;
 `;
-
-
 function TextInputWithLabel({
   elementId,
   label,
