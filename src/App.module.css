@@ -1,0 +1,19 @@
+
+.App {
+  display: flex; 
+  flex-direction: column;
+  align-items: center; 
+  min-height: 100vh; 
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+
+.ErrorContainer {
+  border: 1px solid red;
+  padding: 10px;
+  margin-top: 10px;
+  color: red;
+  background-color: #ffebeb;
+}
+
