@@ -1,3 +1,10 @@
+import styled from 'styled-components';
+const StyledDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+
 function TextInputWithLabel({
   elementId,
   label,
@@ -6,7 +13,7 @@ function TextInputWithLabel({
   value,
 }) {
   return (
-    <>
+    <StyledDiv>
       <label htmlFor={elementId}>{label}</label>
       <input
         type="text"
@@ -15,7 +22,7 @@ function TextInputWithLabel({
         value={value}
         onChange={onChange}
       />
-    </>
+    </StyledDiv>
   );
 }
 

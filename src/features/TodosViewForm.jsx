@@ -1,4 +1,19 @@
 import React from 'react';
+import styled from 'styled-components';
+const StyledForm = styled.form`
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Add small amount of padding on the items */
+    padding: 20px;
+    border: 1px solid #ddd;
+    width: 100%;
+    max-width: 600px;
+`;
+
+const StyledDiv = styled.div`
+    display: flex;
+    flex-direction: column;
+`;
 
 const TodosViewForm = ({ sortField, setSortField, sortDirection, setSortDirection, queryString, setQueryString }) => {
   const preventRefresh = (e) => {
@@ -6,8 +21,8 @@ const TodosViewForm = ({ sortField, setSortField, sortDirection, setSortDirectio
   };
   
   return (
-    <form onSubmit={preventRefresh}>
-      <div>
+    <StyledForm onSubmit={preventRefresh}>
+      <StyledDiv>
         <label htmlFor="search">Search todos:</label>
         <input 
           id="search"
@@ -16,8 +31,8 @@ const TodosViewForm = ({ sortField, setSortField, sortDirection, setSortDirectio
           onChange={(e) => setQueryString(e.target.value)} 
         />
         <button type="button" onClick={() => setQueryString('')}>Clear</button>
-      </div>
-      <div>
+      </StyledDiv>
+      <StyledDiv>
         <label htmlFor="sortField">Sort by</label>
         <select 
           id="sortField" 
@@ -27,9 +42,9 @@ const TodosViewForm = ({ sortField, setSortField, sortDirection, setSortDirectio
           <option value="title">Title</option>
           <option value="createdTime">Time added</option>
         </select>
-      </div>
+      </StyledDiv>
      <br/>
-      <div>
+      <StyledDiv>
         <label htmlFor="sortDirection">Direction</label>
         <select 
           id="sortDirection"
@@ -39,8 +54,8 @@ const TodosViewForm = ({ sortField, setSortField, sortDirection, setSortDirectio
           <option value="asc">Ascending</option>
           <option value="desc">Descending</option>
         </select>
-      </div>
-    </form>
+      </StyledDiv>
+    </StyledForm>
   );
 };
 
